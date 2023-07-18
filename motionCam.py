@@ -1,0 +1,72 @@
+import cv2
+import time
+import numpy as np
+import os
+import datetime
+
+# Parameters
+width, height = 640, 480
+video_source = 0  # change this if you have multiple webcams
+frame_save_interval = 0.5  # in seconds
+frames_to_save = 5  # number of frames to save
+
+motion_frac = 0.1
+
+motion_threshold = motion_frac * width * height  # motion threshold in pixels
+
+cool_down_time = 5  # cool down time in seconds
+
+# Initialize video capture
+cap = cv2.VideoCapture(video_source)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+
+ret, frame1 = cap.read()
+ret, frame2 = cap.read()
+last_motion_time = time.time() - cool_down_time  # initialize to enable immediate capture
+
+try:
+    while True:
+        current_time = time.time()
+        if current_time - last_motion_time < cool_down_time:  # skip if cool down has not passed
+            continue
+
+        diff = cv2.absdiff(frame1, frame2)
+        gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+        blur = cv2.GaussianBlur(gray, (5, 5), 0)
+        _, thresh = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)
+        dilated = cv2.dilate(thresh, None, iterations=3)
+        contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        motion_detected = False
+
+        for contour in contours:
+            (x, y, w, h) = cv2.boundingRect(contour)
+
+            if cv2.contourArea(contour) < motion_threshold:
+                continue
+
+            motion_detected = True
+
+        if motion_detected:
+            print("Motion detected!")
+            last_motion_time = current_time
+            timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            save_dir = os.path.join('cam', timestamp_str)
+            os.makedirs(save_dir, exist_ok=True)
+            for i in range(frames_to_save):
+                ret, frame = cap.read()
+                if ret:  # if frame read successfully
+                    cv2.imwrite(os.path.join(save_dir, 'motion_frame_{}.png'.format(i)), frame)
+                    time.sleep(frame_save_interval)
+
+        frame1 = frame2
+        ret, frame2 = cap.read()
+
+        # Wait for FPS rate before next frame
+        time.sleep(1 / 30)  # 30 FPS
+
+except KeyboardInterrupt:
+    print("Interrupt received, stopping...")
+finally:
+    cap.release()
