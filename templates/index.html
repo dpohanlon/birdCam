@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>Webcam Live Feed</title>
+</head>
+<body>
+    <h2>Live Video 📺</h2>
+    <img id="live" src="" alt="Live stream" width="640" height="480">
+
+    <h2>Last 5 Birds 🐦</h2>
+    <div id="motion_images"></div>
+
+    <script type="text/javascript">
+        var namespace = '/live';
+        var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
+
+        socket.on('connect', function() {
+            console.log('Connected');
+        });
+
+        socket.on('response', function(msg) {
+            document.getElementById('live').src = 'data:image/jpeg;base64,' + msg.image;
+        });
+
+        function update_motion_images() {
+            $.get('/get_latest_images', function(data) {
+                $('#motion_images').empty();
+                data.images.forEach(function(image) {
+                    var img = $('<img class="gallery_image">');
+                    img.attr('src', '/motion_images/' + image);
+                    img.attr('width', '128');
+                    img.attr('height', '96');
+                    img.on('click', function() {
+                        window.open(img.attr('src'));
+                    });
+                    $('#motion_images').append(img);
+                });
+            });
+        }
+
+        setInterval(update_motion_images, 1000);  // check for new images every second
+    </script>
+</body>
+</html>

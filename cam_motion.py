@@ -4,28 +4,27 @@ import numpy as np
 import os
 import datetime
 
-# Parameters
-width, height = 640, 480
-video_source = 0  # change this if you have multiple webcams
-frame_save_interval = 0.5  # in seconds
-frames_to_save = 5  # number of frames to save
+from cam_interface import Camera
 
-motion_frac = 0.1
+def detect_motion(camera):
 
-motion_threshold = motion_frac * width * height  # motion threshold in pixels
+    # Parameters
+    width, height = 640, 480
+    video_source = 0  # change this if you have multiple webcams
+    frame_save_interval = 1  # in seconds
+    frames_to_save = 5  # number of frames to save
 
-cool_down_time = 5  # cool down time in seconds
+    motion_frac = 0.1
 
-# Initialize video capture
-cap = cv2.VideoCapture(video_source)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+    motion_threshold = motion_frac * width * height  # motion threshold in pixels
 
-ret, frame1 = cap.read()
-ret, frame2 = cap.read()
-last_motion_time = time.time() - cool_down_time  # initialize to enable immediate capture
+    cool_down_time = 5  # cool down time in seconds
 
-try:
+    last_motion_time = time.time() - cool_down_time  # initialize to enable immediate capture
+
+    frame1 = camera.get_frame()
+    frame2 = camera.get_frame()
+
     while True:
         current_time = time.time()
         if current_time - last_motion_time < cool_down_time:  # skip if cool down has not passed
@@ -52,21 +51,23 @@ try:
             print("Motion detected!")
             last_motion_time = current_time
             timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            save_dir = os.path.join('cam', timestamp_str)
+            save_dir = 'motion_images'
             os.makedirs(save_dir, exist_ok=True)
             for i in range(frames_to_save):
-                ret, frame = cap.read()
-                if ret:  # if frame read successfully
-                    cv2.imwrite(os.path.join(save_dir, 'motion_frame_{}.png'.format(i)), frame)
-                    time.sleep(frame_save_interval)
+
+                frame = camera.get_frame()
+
+                cv2.imwrite(os.path.join(save_dir, f'motion_frame_{timestamp_str}_{i}.png'), frame)
+                time.sleep(frame_save_interval)
 
         frame1 = frame2
-        ret, frame2 = cap.read()
+        frame2 = camera.get_frame()
 
         # Wait for FPS rate before next frame
         time.sleep(1 / 30)  # 30 FPS
 
-except KeyboardInterrupt:
-    print("Interrupt received, stopping...")
-finally:
-    cap.release()
+if __name__ == '__main__':
+
+    camera = Camera.get_instance()
+
+    detect_motion(camera)
