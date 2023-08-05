@@ -12,13 +12,13 @@ preprocess = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize the tensor
 ])
 
-# Load the quantized model
-model = torch.jit.load("quantized_model.pth")
-model.eval()
+def classifyBird(fileName):
 
-class_dict = pickle.load(open('class_dict.pkl', 'rb'))
+    # Load the quantized model
+    model = torch.jit.load("quantized_model.pth")
+    model.eval()
 
-for fileName in ['t1.png', 't2.png', 't3.png', 't4.png', 't5.png', 't6.png', 't7.png', 't8.png']:
+    class_dict = pickle.load(open('class_dict.pkl', 'rb'))
 
     # Load the image
     image = Image.open(fileName)  # Assuming your image is named 'input.jpg'
@@ -50,3 +50,11 @@ for fileName in ['t1.png', 't2.png', 't3.png', 't4.png', 't5.png', 't6.png', 't7
     # Print the top 5 classes and their probabilities
     for i in range(5):
         print(f"Class: {class_dict[top5_pred.indices[0][i].item()]}, Probability: {top5_pred.values[0][i]}")
+
+    return probabilities
+
+if __name__ == '__main__':
+
+    for fileName in ['t1.png', 't2.png', 't3.png', 't4.png', 't5.png', 't6.png', 't7.png', 't8.png']:
+
+        classifyBird(fileName)
