@@ -24,18 +24,22 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
 # Initialize video writer
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 'mp4v' for .mp4
+fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # 'mp4v' for .mp4
 
 ret, frame1 = cap.read()
 ret, frame2 = cap.read()
-last_motion_time = time.time() - cool_down_time  # initialize to enable immediate capture
+last_motion_time = (
+    time.time() - cool_down_time
+)  # initialize to enable immediate capture
 
 pb = Pushbullet(pb_api_key)
 
 try:
     while True:
         current_time = time.time()
-        if current_time - last_motion_time < cool_down_time:  # skip if cool down has not passed
+        if (
+            current_time - last_motion_time < cool_down_time
+        ):  # skip if cool down has not passed
             continue
 
         diff = cv2.absdiff(frame1, frame2)
@@ -59,12 +63,14 @@ try:
             print("Motion detected!")
             last_motion_time = current_time
             timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            save_dir = os.path.join('cam_video', timestamp_str)
+            save_dir = os.path.join("cam_video", timestamp_str)
             os.makedirs(save_dir, exist_ok=True)
 
-            video_file_name = f'motion_video_{timestamp_str}.mp4'
+            video_file_name = f"motion_video_{timestamp_str}.mp4"
             video_file_path = os.path.join(save_dir, video_file_name)
-            video_writer = cv2.VideoWriter(video_file_path, fourcc, video_fps, (width, height))
+            video_writer = cv2.VideoWriter(
+                video_file_path, fourcc, video_fps, (width, height)
+            )
 
             for _ in range(video_length * video_fps):
                 ret, frame = cap.read()
@@ -80,7 +86,9 @@ try:
                     file_data = pb.upload_file(f, video_file_name)
 
                 pb.push_file(**file_data)
-                pb.push_note("Motion detected", "Motion has been detected by the webcam.")
+                pb.push_note(
+                    "Motion detected", "Motion has been detected by the webcam."
+                )
 
             except:
 

@@ -6,6 +6,7 @@ import datetime
 
 from cam_interface import Camera
 
+
 def detect_motion(camera):
 
     # Parameters
@@ -20,14 +21,18 @@ def detect_motion(camera):
 
     cool_down_time = 5  # cool down time in seconds
 
-    last_motion_time = time.time() - cool_down_time  # initialize to enable immediate capture
+    last_motion_time = (
+        time.time() - cool_down_time
+    )  # initialize to enable immediate capture
 
     frame1 = camera.get_frame()
     frame2 = camera.get_frame()
 
     while True:
         current_time = time.time()
-        if current_time - last_motion_time < cool_down_time:  # skip if cool down has not passed
+        if (
+            current_time - last_motion_time < cool_down_time
+        ):  # skip if cool down has not passed
             continue
 
         diff = cv2.absdiff(frame1, frame2)
@@ -51,13 +56,16 @@ def detect_motion(camera):
             print("Motion detected!")
             last_motion_time = current_time
             timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            save_dir = 'motion_images'
+            save_dir = "motion_images"
             os.makedirs(save_dir, exist_ok=True)
             for i in range(frames_to_save):
 
                 frame = camera.get_frame()
 
-                cv2.imwrite(os.path.join(save_dir, f'motion_frame_{timestamp_str}_{i}.png'), frame)
+                cv2.imwrite(
+                    os.path.join(save_dir, f"motion_frame_{timestamp_str}_{i}.png"),
+                    frame,
+                )
                 time.sleep(frame_save_interval)
 
         frame1 = frame2
@@ -66,7 +74,8 @@ def detect_motion(camera):
         # Wait for FPS rate before next frame
         time.sleep(1 / 30)  # 30 FPS
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
 
     camera = Camera.get_instance()
 

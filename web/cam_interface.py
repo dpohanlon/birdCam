@@ -5,6 +5,7 @@ import atexit
 
 # SPMC camera interface
 
+
 class Camera:
     instance = None  # Default to no instance
 
@@ -35,7 +36,7 @@ class Camera:
             with self.queue_lock:
                 if not self.frame_queue.empty():
                     try:
-                        self.frame_queue.get_nowait()   # discard previous frame
+                        self.frame_queue.get_nowait()  # discard previous frame
                     except queue.Empty:
                         pass
                 self.frame_queue.put(frame)
@@ -61,7 +62,7 @@ class Camera:
             self.capture_thread.join()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     camera = Camera.get_instance()
 
