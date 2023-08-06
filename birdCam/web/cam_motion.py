@@ -6,7 +6,7 @@ import datetime
 
 from cam_interface import Camera
 
-from classifier.classify import predict_bird
+from birdCam.classifier.classify import predict_bird
 
 
 def frame_has_bird(frame):
