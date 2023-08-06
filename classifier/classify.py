@@ -1,6 +1,6 @@
 import torch
 import json
-from torchvision import transforms
+from torchvision import transforms, models
 from PIL import Image
 
 import pickle
@@ -17,20 +17,23 @@ preprocess = transforms.Compose(
     ]
 )
 
+
+def mobilenetBirds():
+
+    allCats = json.load(open("simple_labels.json", "rb"))
+    onlyBirds = json.load(open("birds.json", "rb"))
+
+    catIndices = {c: i for i, c in enumerate(allCats)}
+    birdIndices = {c: catIndices[c] for c in onlyBirds}
+
+    return birdIndices
+
+
 bird_indices = mobilenetBirds().values()
 
 birdModel = models.mobilenet_v3_large(pretrained=True)
 birdModel.eval()
 
-def mobilenetBirds():
-
-    allCats = json.load(open('simple_labels.json', 'rb'))
-    onlyBirds = json.load(open('birds.json', 'rb'))
-
-    catIndices = {c : i for i, c in enumerate(allCats)}
-    birdIndices = {c : catIndices[c] for c in onlyBirds}
-
-    return birdIndices
 
 def predict_bird(image_path):
 
@@ -43,13 +46,17 @@ def predict_bird(image_path):
     with torch.no_grad():
         out = birdModel(batch_t)
 
+    probs = torch.nn.functional.softmax(out, dim=1).ravel()
+
     # Get top 5 indices
-    _, indices = torch.topk(out, 5)
+    probs5, indices5 = torch.topk(probs, 5)
 
     # Check if any of the top 5 predictions is a bird
-    is_bird = any(idx in bird_indices for idx in indices[0])
+    is_bird = any(idx in bird_indices for idx in indices5)
 
-    return is_bird
+    birdProbs = probs[list(bird_indices)]
+
+    return is_bird, birdProbs
 
 
 def classifySpecies(fileName):
@@ -98,15 +105,31 @@ def classifySpecies(fileName):
 
 if __name__ == "__main__":
 
-    for fileName in [
-        "t1.png",
-        "t2.png",
-        "t3.png",
-        "t4.png",
-        "t5.png",
-        "t6.png",
-        "t7.png",
-        "t8.png",
-    ]:
+    # for fileName in [
+    #     "t1.png",
+    #     "t2.png",
+    #     "t3.png",
+    #     "t4.png",
+    #     "t5.png",
+    #     "t6.png",
+    #     "t7.png",
+    #     "t8.png",
+    # ]:
+    #
+    #     classifySpecies(fileName)
 
-        classifySpecies(fileName)
+    import os
+
+    files = os.listdir("/Users/dan/Downloads/webcam_images/motion_images")
+    files = list(filter(lambda x: ".png" in x, files))
+
+    from tqdm import tqdm
+    import numpy as np
+
+    for f in tqdm(files):
+        fileName = f"/Users/dan/Downloads/webcam_images/motion_images/{f}"
+        is_bird, probs = predict_bird(fileName)
+        if is_bird and np.sum(probs.ravel().numpy()) > 0.25:
+            print(fileName)
+            # print(probs)
+            print("")

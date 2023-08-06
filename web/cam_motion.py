@@ -6,6 +6,56 @@ import datetime
 
 from cam_interface import Camera
 
+from classifier.classify import predict_bird
+
+
+def frame_has_bird(frame):
+
+    timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    cv2.imwrite(f"/tmp/{timestamp_str}.png", frame)
+
+    is_top5, probs = predict_bird(f"/tmp/{timestamp_str}.png")
+
+    is_bird = is_top5 and np.sum(probs.ravel().numpy()) > 0.25
+
+    return is_bird
+
+
+def save_frames(camera, is_bird, frames_to_save, frame_save_interval):
+
+    timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Save to a directory for display on the web
+    save_dir_display = "motion_images"
+
+    # Save the rest of the frames somewhere else
+    save_dir_rest = "motion_images_rest"
+
+    # Save those that didn't pass the bird classifier, just in case
+    save_dir_fail = "motion_images_fail"
+
+    os.makedirs(save_dir_display, exist_ok=True)
+    os.makedirs(save_dir_rest, exist_ok=True)
+    os.makedirs(save_dir_fail, exist_ok=True)
+
+    for i in range(frames_to_save):
+
+        frame = camera.get_frame()
+
+        if is_bird and i == 0:
+            save_dir = save_dir_display
+        elif is_bird:
+            save_dir = save_dir_rest
+        else:
+            save_dir = save_dir_fail
+
+        cv2.imwrite(
+            os.path.join(save_dir, f"motion_frame_{timestamp_str}_{i}.png"),
+            frame,
+        )
+        time.sleep(frame_save_interval)
+
 
 def detect_motion(camera):
 
@@ -54,19 +104,13 @@ def detect_motion(camera):
 
         if motion_detected:
             print("Motion detected!")
+
             last_motion_time = current_time
-            timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            save_dir = "motion_images"
-            os.makedirs(save_dir, exist_ok=True)
-            for i in range(frames_to_save):
 
-                frame = camera.get_frame()
+            # Can take a while, would be nice not to block here
+            is_bird = frame_has_bird(frame2)
 
-                cv2.imwrite(
-                    os.path.join(save_dir, f"motion_frame_{timestamp_str}_{i}.png"),
-                    frame,
-                )
-                time.sleep(frame_save_interval)
+            save_frames(camera, is_bird, frames_to_save, frame_save_interval)
 
         frame1 = frame2
         frame2 = camera.get_frame()
