@@ -28,6 +28,16 @@ def mobilenetBirds():
 
     return birdIndices
 
+def speciesModel():
+
+    # Load the quantized model
+    model = torch.jit.load("quantized_model.pth")
+    model.eval()
+
+    return model
+
+species_dict = pickle.load(open("class_dict.pkl", "rb"))
+species_model = speciesModel()
 
 bird_indices = mobilenetBirds().values()
 
@@ -59,16 +69,10 @@ def predict_bird(image_path):
     return is_bird, birdProbs
 
 
-def classifySpecies(fileName):
-
-    # Load the quantized model
-    model = torch.jit.load("quantized_model.pth")
-    model.eval()
-
-    class_dict = pickle.load(open("class_dict.pkl", "rb"))
+def predict_species(fileName):
 
     # Load the image
-    image = Image.open(fileName)  # Assuming your image is named 'input.jpg'
+    image = Image.open(fileName)
 
     # Get the size of the image
     width, height = image.size
@@ -81,12 +85,11 @@ def classifySpecies(fileName):
 
     # Perform the inference
     with torch.no_grad():
-        output = model(image)
+        output = species_model(image)
 
     # Interpret the output (assumes the model outputs raw scores, not probabilities)
     _, predicted = torch.max(output, 1)
-    print(f"Predicted class: {class_dict[predicted.item()]}")
-    print("")
+    pred_class = species_dict[predicted.item()]
 
     # Convert output scores to probabilities
     probabilities = torch.nn.functional.softmax(output, dim=1)
@@ -94,13 +97,7 @@ def classifySpecies(fileName):
     # Get the indices of the top 5 predictions
     top5_pred = torch.topk(probabilities, 5)
 
-    # Print the top 5 classes and their probabilities
-    for i in range(5):
-        print(
-            f"Class: {class_dict[top5_pred.indices[0][i].item()]}, Probability: {top5_pred.values[0][i]}"
-        )
-
-    return probabilities
+    return probabilities, pred_class
 
 
 if __name__ == "__main__":

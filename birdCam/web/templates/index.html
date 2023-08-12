@@ -3,6 +3,30 @@
 <head>
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .img-container {
+            display: inline-block;
+            margin: 5px; /* adjust as needed */
+            text-align: center; /* centers the date/time text below the image */
+        }
+        .species-name {
+            /* font-weight: bold; */
+            font-size: 0.8em;  // Adjust as needed
+            display: block;
+            margin: 0; /* Resetting margin and padding to ensure consistent spacing */
+            padding: 0;
+        }
+        .datetime {
+            font-size: 0.9em;  // Adjust as needed
+            display: block;
+            margin: 0; /* Resetting margin and padding to ensure consistent spacing */
+            padding: 0;
+        }
+        .species-name-container {
+            height: 3.0em;  /* Adjust based on font size and expected max number of lines */
+            overflow: hidden;  /* This ensures any excess content is hidden */
+        }
+    </style>
     <title>Webcam Live Feed</title>
 </head>
 <body>
@@ -24,10 +48,35 @@
             document.getElementById('live').src = 'data:image/jpeg;base64,' + msg.image;
         });
 
+        function getDateTimeFromFilename(filename) {
+            var matches = filename.match(/motion_frame_(\d{8})_(\d{6})_\d(?:_[\w_]+)?\.png/);
+            if (matches) {
+                var datePart = matches[1];
+                var timePart = matches[2];
+
+                var formattedDate = datePart.substring(0, 4) + "-" + datePart.substring(4, 6) + "-" + datePart.substring(6, 8);
+                var formattedTime = timePart.substring(0, 2) + ":" + timePart.substring(2, 4) + ":" + timePart.substring(4, 6);
+
+                return formattedDate + " " + formattedTime;
+            }
+            return "";
+        }
+
+        function getSpeciesFromFilename(filename) {
+            var matches = filename.match(/motion_frame_\d{8}_\d{6}_\d_([\w_]+)\.png/);
+            if (matches && matches[1]) {
+                return matches[1].replace(/_/g, ' ');  // replace underscores with spaces
+            }
+            return "";  // return empty string if no species name is found
+        }
+
         function update_motion_images() {
             $.get('/get_latest_images', function(data) {
                 $('#motion_images').empty();
                 data.images.forEach(function(image) {
+                    var dateTime = getDateTimeFromFilename(image);
+                    var speciesNames = getSpeciesFromFilename(image).split(' '); // Split species name on spaces
+
                     var img = $('<img class="gallery_image">');
                     img.attr('src', '/motion_images/' + image);
                     img.attr('width', '128');
@@ -35,7 +84,19 @@
                     img.on('click', function() {
                         window.open(img.attr('src'));
                     });
-                    $('#motion_images').append(img);
+
+                    var dateTimeDiv = $('<div>').text(dateTime).addClass('datetime');;
+
+                    var speciesDivContainer = $('<div>').addClass('species-name-container');
+                    speciesNames.forEach(function(name) {
+                        var speciesDiv = $('<div>').text(name).addClass('species-name');
+                        speciesDivContainer.append(speciesDiv);
+                    });
+
+                    var containerDiv = $('<div>').addClass('img-container');
+                    containerDiv.append(dateTimeDiv).append(img).append(speciesDivContainer);  // Reordered for desired structure
+
+                    $('#motion_images').append(containerDiv);
                 });
             });
         }

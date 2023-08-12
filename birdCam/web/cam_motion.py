@@ -6,7 +6,7 @@ import datetime
 
 from cam_interface import Camera
 
-from birdCam.classifier.classify import predict_bird
+from birdCam.classifier.classify import predict_bird, predict_species
 
 
 def frame_has_bird(frame):
@@ -19,10 +19,13 @@ def frame_has_bird(frame):
 
     is_bird = is_top5 and np.sum(probs.ravel().numpy()) > 0.25
 
-    return is_bird
+    if is_bird:
+        return is_bird, predict_species(f"/tmp/{timestamp_str}.png")[1]
+
+    return is_bird, None
 
 
-def save_frames(camera, is_bird, frames_to_save, frame_save_interval):
+def save_frames(camera, is_bird, species, frames_to_save, frame_save_interval):
 
     timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -43,15 +46,18 @@ def save_frames(camera, is_bird, frames_to_save, frame_save_interval):
 
         frame = camera.get_frame()
 
+        species_str = ''
+
         if is_bird and i == 0:
             save_dir = save_dir_display
+            species_str = f"_{species.replace(' ', '_')}"
         elif is_bird:
             save_dir = save_dir_rest
         else:
             save_dir = save_dir_fail
 
         cv2.imwrite(
-            os.path.join(save_dir, f"motion_frame_{timestamp_str}_{i}.png"),
+            os.path.join(save_dir, f"motion_frame_{timestamp_str}_{i}{species_str}.png"),
             frame,
         )
         time.sleep(frame_save_interval)
@@ -108,9 +114,9 @@ def detect_motion(camera):
             last_motion_time = current_time
 
             # Can take a while, would be nice not to block here
-            is_bird = frame_has_bird(frame2)
+            is_bird, species = frame_has_bird(frame2)
 
-            save_frames(camera, is_bird, frames_to_save, frame_save_interval)
+            save_frames(camera, is_bird, species, frames_to_save, frame_save_interval)
 
         frame1 = frame2
         frame2 = camera.get_frame()
