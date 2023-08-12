@@ -28,4 +28,4 @@ The web app itself is located in `birdCam/web/birdapp.py`, I run it with
 nohup python birdapp.py &
 ```
 
-but anyone with a greater sense of self preservation should run it using a property configured web server.
+but anyone with a greater sense of self preservation should run it using a properly configured web server.
