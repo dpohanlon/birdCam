@@ -16,6 +16,12 @@
             margin: 0; /* Resetting margin and padding to ensure consistent spacing */
             padding: 0;
         }
+        .datetime {
+            font-size: 0.9em;  // Adjust as needed
+            display: block;
+            margin: 0; /* Resetting margin and padding to ensure consistent spacing */
+            padding: 0;
+        }
         .species-name-container {
             height: 3.0em;  /* Adjust based on font size and expected max number of lines */
             overflow: hidden;  /* This ensures any excess content is hidden */
@@ -79,7 +85,7 @@
                         window.open(img.attr('src'));
                     });
 
-                    var dateTimeDiv = $('<div>').text(dateTime);
+                    var dateTimeDiv = $('<div>').text(dateTime).addClass('datetime');;
 
                     var speciesDivContainer = $('<div>').addClass('species-name-container');
                     speciesNames.forEach(function(name) {
