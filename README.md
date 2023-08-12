@@ -18,3 +18,14 @@ Bird ID
 ---
 
 A separate custom version of the `MobileNetV3` model is used to identify the bird species in the image. For inference speed, the quantised `torchvision` version of the model is used (which is probably not necessary: Raspberry Pis are fast and birds are slow). This is fine-tuned with quantisation-aware training on the [Kaggle birds dataset](https://www.kaggle.com/datasets/gpiosenka/100-bird-species).
+
+Usage
+---
+
+The web app itself is located in `birdCam/web/birdapp.py`, I run it with
+
+```python
+nohup python birdapp.py &
+```
+
+but anyone with a greater sense of self preservation should run it using a property configured web server.

@@ -10,8 +10,9 @@
             text-align: center; /* centers the date/time text below the image */
         }
         .species-name {
-            font-weight: bold;
-            font-size: 1.1em;  // Adjust as needed
+            /* font-weight: bold; */
+            font-size: 0.8em;  // Adjust as needed
+            display: block;
         }
     </style>
     <title>Webcam Live Feed</title>
@@ -62,7 +63,7 @@
                 $('#motion_images').empty();
                 data.images.forEach(function(image) {
                     var dateTime = getDateTimeFromFilename(image);
-                    var speciesName = getSpeciesFromFilename(image);
+                    var speciesNames = getSpeciesFromFilename(image).split(' '); // Split species name on spaces
 
                     var img = $('<img class="gallery_image">');
                     img.attr('src', '/motion_images/' + image);
@@ -72,17 +73,22 @@
                         window.open(img.attr('src'));
                     });
 
-                    var speciesDiv = $('<div>').text(speciesName).addClass('species-name');  // Add class for potential styling
                     var dateTimeDiv = $('<div>').text(dateTime);
 
+                    var speciesDivContainer = $('<div>').addClass('species-name-container');
+                    speciesNames.forEach(function(name) {
+                        var speciesDiv = $('<div>').text(name).addClass('species-name');
+                        speciesDivContainer.append(speciesDiv);
+                    });
+
                     var containerDiv = $('<div>').addClass('img-container');
-                    if (speciesName) containerDiv.append(speciesDiv);  // Only append if there's a species name
-                    containerDiv.append(img).append(dateTimeDiv);
+                    containerDiv.append(dateTimeDiv).append(img).append(speciesDivContainer);  // Reordered for desired structure
 
                     $('#motion_images').append(containerDiv);
                 });
             });
         }
+
         setInterval(update_motion_images, 1000);  // check for new images every second
     </script>
 </body>
