@@ -29,3 +29,8 @@ nohup python birdapp.py &
 ```
 
 but anyone with a greater sense of self preservation should run it using a properly configured web server.
+
+Model
+---
+
+A trained model for robins, sparrows, and blue tits can be found [here](https://public-dpo.s3.us-east-1.amazonaws.com/model.pth). This achives an average F1 score of 0.967.
