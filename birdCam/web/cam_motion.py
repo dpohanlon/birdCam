@@ -8,7 +8,6 @@ from cam_interface import Camera
 
 from birdCam.classifier.classify import predict_bird, predict_species
 
-
 def frame_has_bird(frame):
 
     timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -17,7 +16,7 @@ def frame_has_bird(frame):
 
     is_top5, probs = predict_bird(f"/tmp/{timestamp_str}.png")
 
-    is_bird = is_top5 and np.sum(probs.ravel().numpy()) > 0.25
+    is_bird = is_top5 and np.sum(probs.ravel().numpy()) > 0.1
 
     if is_bird:
         return is_bird, predict_species(f"/tmp/{timestamp_str}.png")[1]
